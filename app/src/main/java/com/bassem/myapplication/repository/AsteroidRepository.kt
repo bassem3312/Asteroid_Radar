@@ -1,11 +1,15 @@
 package com.bassem.myapplication.repository
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.bassem.myapplication.Constants.API_KEY
 import com.bassem.myapplication.api.AsteroidApiService
+import com.bassem.myapplication.api.getNextSevenDays
+import com.bassem.myapplication.api.getTodayDate
 import com.bassem.myapplication.api.parseAsteroidsJsonResult
 import com.bassem.myapplication.database.AsteroidDatabase
 import com.bassem.myapplication.database.asDataBaseModel
@@ -18,6 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -28,20 +34,36 @@ class AsteroidRepository(private val database: AsteroidDatabase) {
 
 
     val loadingStatus = MutableLiveData<AsteroidApiStatus>()
-    private val sdf = SimpleDateFormat("yyyy-MM-dd")
-    private val currentDate = sdf.format(Date())
+    private val startDate = getTodayDate()
 
-    val asteroids: LiveData<List<AsteroidModel>> =
-        Transformations.map(database.asteroidDatabaseDao().getAsteroidsDay(currentDate)) {
+    private val endDate = getNextSevenDays()
+
+    val allAsteroids: LiveData<List<AsteroidModel>> =
+        Transformations.map(database.asteroidDatabaseDao().getAsteroids()) {
             it.asDomainModel()
         }
+
+    val todayAsteroids: LiveData<List<AsteroidModel>> =
+        Transformations.map(database.asteroidDatabaseDao().getAsteroidsDay(startDate.format(DateTimeFormatter.ISO_DATE))) {
+            it.asDomainModel()
+        }
+
+    val weekAsteroids: LiveData<List<AsteroidModel>> =
+        Transformations.map(
+            database.asteroidDatabaseDao().getAsteroidsDate(
+                startDate,
+                endDate)
+        ) {
+            it.asDomainModel()
+        }
+
 
     suspend fun refreshAsteroidListIntoDB() {
         withContext(Dispatchers.IO) {
 
             try {
                 loadingStatus.postValue(AsteroidApiStatus.LOADING)
-                val asteroids = AsteroidApiService.AsteroidApi.retrofitService.getAsteroids("", "", API_KEY)
+                val asteroids = AsteroidApiService.AsteroidApi.retrofitService.getAsteroids( API_KEY)
                 var asteroidList = parseAsteroidsJsonResult(JSONObject(asteroids.toString()))
                 database.asteroidDatabaseDao().insertAll(*asteroidList.asDataBaseModel())
                 loadingStatus.postValue(AsteroidApiStatus.DONE)

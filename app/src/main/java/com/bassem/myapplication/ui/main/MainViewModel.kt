@@ -1,22 +1,33 @@
 package com.bassem.myapplication.ui.main
 
 import android.app.Application
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
 import com.bassem.myapplication.database.AsteroidDatabase
 import com.bassem.myapplication.model.AsteroidModel
 import com.bassem.myapplication.model.PictureOfDay
 import com.bassem.myapplication.repository.AsteroidRepository
 import kotlinx.coroutines.launch
-enum class AsteroidApiStatus { LOADING, ERROR, DONE }
 
+enum class AsteroidApiStatus { LOADING, ERROR, DONE }
+enum class FilterAsteroid { TODAY, WEEK, ALL }
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val database = AsteroidDatabase.getInstance(app.applicationContext)
 
     private val asteroidRepository = AsteroidRepository(database)
 
+    private var _filterAsteroid = MutableLiveData(FilterAsteroid.ALL)
 
-    var asteroidList = asteroidRepository.asteroids
+    var asteroidList = Transformations.switchMap(_filterAsteroid) {
+        when (it!!) {
+            FilterAsteroid.WEEK -> asteroidRepository.weekAsteroids
+            FilterAsteroid.TODAY -> asteroidRepository.todayAsteroids
+            else -> asteroidRepository.allAsteroids
+        }
+    }
+
 
     val status = asteroidRepository.loadingStatus
 
@@ -37,7 +48,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun getAsteroidList() {
         viewModelScope.launch {
-            asteroidList = asteroidRepository.asteroids
+//            asteroidList = asteroidRepository.asteroids
             asteroidRepository.refreshAsteroidListIntoDB()
         }
     }
@@ -49,7 +60,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 _pictureOfDay.postValue(asteroidRepository.getPictureOfDay())
             } catch (ex: Exception) {
                 ex.printStackTrace()
-                _pictureOfDay.postValue(PictureOfDay("ss","ss","ss"))
+                _pictureOfDay.postValue(PictureOfDay("ss", "ss", "ss"))
             }
         }
     }
@@ -60,6 +71,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun displayAsteroidDetailsComplete() {
         _navigateToSelectedAsteroid.value = null
+    }
+
+    fun onChangeFilter(filterAsteroid: FilterAsteroid) {
+        _filterAsteroid.postValue(filterAsteroid)
     }
 
     class Factory(val app: Application) : ViewModelProvider.Factory {

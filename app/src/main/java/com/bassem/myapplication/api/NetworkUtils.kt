@@ -1,12 +1,11 @@
 package com.bassem.myapplication.api
 
 import android.os.Build
-import com.bassem.myapplication.model.AsteroidModel
 import com.bassem.myapplication.Constants
+import com.bassem.myapplication.model.AsteroidModel
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 fun parseAsteroidsJsonResult(jsonResult: JSONObject): ArrayList<AsteroidModel> {
     val nearEarthObjectsJson = jsonResult.getJSONObject("near_earth_objects")
@@ -35,8 +34,10 @@ fun parseAsteroidsJsonResult(jsonResult: JSONObject): ArrayList<AsteroidModel> {
                 val isPotentiallyHazardous = asteroidJson
                     .getBoolean("is_potentially_hazardous_asteroid")
 
-                val asteroidModel = AsteroidModel(id, codename, formattedDate, absoluteMagnitude,
-                    estimatedDiameter, relativeVelocity, distanceFromEarth, isPotentiallyHazardous)
+                val asteroidModel = AsteroidModel(
+                    id, codename, formattedDate, absoluteMagnitude,
+                    estimatedDiameter, relativeVelocity, distanceFromEarth, isPotentiallyHazardous
+                )
                 asteroidModelList.add(asteroidModel)
             }
         }
@@ -61,4 +62,18 @@ private fun getNextSevenDaysFormattedDates(): ArrayList<String> {
     }
 
     return formattedDateList
+}
+
+fun getTodayDate(): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd")
+    return sdf.format(Date())
+
+}
+
+fun getNextSevenDays(): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd")
+    val calendar: Calendar = GregorianCalendar()
+    calendar.add(Calendar.DATE, 7)
+    return sdf.format(calendar.time)
+
 }
