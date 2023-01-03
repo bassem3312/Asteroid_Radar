@@ -46,8 +46,8 @@ class AsteroidRepository(private val database: AsteroidDatabase) {
                 database.asteroidDatabaseDao().insertAll(*asteroidList.asDataBaseModel())
                 loadingStatus.postValue(AsteroidApiStatus.DONE)
             } catch (e: Exception) {
-                Log.e("===Exception", e.toString())
-                loadingStatus.postValue(AsteroidApiStatus.ERROR)
+                e.printStackTrace()
+                loadingStatus . postValue (AsteroidApiStatus.ERROR)
             }
         }
     }
@@ -58,7 +58,7 @@ class AsteroidRepository(private val database: AsteroidDatabase) {
         try {
             return AsteroidApiService.AsteroidApi.retrofitService.getPlanetaryApod(API_KEY)
         } catch (e: Exception) {
-            Log.e("===Exception", e.toString())
+            e.printStackTrace()
             throw e
         }
     }

@@ -21,12 +21,10 @@ class UpdateWorker(appContext: Context, params: WorkerParameters) :
     }
 
     override suspend fun doWork(): Result {
-        Log.e("======","Worker do work")
 
         val database = AsteroidDatabase.getInstance(applicationContext)
         val repository = AsteroidRepository(database)
         return try {
-            Log.e("======","Worker do work")
             repository.refreshAsteroidListIntoDB()
             Result.success()
         } catch (ex: HttpException) {

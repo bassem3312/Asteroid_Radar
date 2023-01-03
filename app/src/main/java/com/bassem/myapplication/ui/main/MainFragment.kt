@@ -34,7 +34,6 @@ class MainFragment : Fragment() {
         binding.asteroidRecycler.addItemDecoration(dividerItemDecoration)
 
         binding.asteroidRecycler.adapter = MainAdapter(MainAdapter.OnClickListener {
-//            viewModel.displayPropertyDetails(it)
             viewModel.onAsteroidItemClicked(it)
 
         })
